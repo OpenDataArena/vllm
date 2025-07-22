@@ -111,7 +111,34 @@ class BaseIncrementalDetokenizer(IncrementalDetokenizer, ABC):
                 self.token_ids.append(skipped_stop_token_id)
             # Stop token triggered; skip stop string check.
             return None
+        min_repetition_len = 200  # 最小重复长度（字符数），避免误判短语
+        lookback_buffer = 200    # 从末尾取多长的文本作为“探针”
 
+        # 确保有足够的文本可供检查
+        current_text = self.output_text
+        if len(current_text) > min_repetition_len + lookback_buffer:
+            # 1. 从末尾取出“探针”
+            probe = current_text[-lookback_buffer:]
+
+            # 2. 定义搜索范围（排除探针自身）
+            search_area = current_text[:-lookback_buffer]
+
+            # 3. 在历史文本中寻找探针
+            #    str.find() 非常高效，它在底层是用 C 实现的
+            #repetition_index = search_area.rfind(probe) # rfind 从后往前找，更快
+            repetition_count = search_area.count(probe)
+
+            if repetition_count >2:
+                # 我们找到了一个重复的“探针”，但这还不够。
+                # 我们需要确认这是不是一个更长重复的开始。
+                # 我们可以简单地认为只要找到就停止，这在大多数情况下都有效。
+                
+                # 为了更精确，可以向前追溯，看重复到底有多长。
+                # 但为了简单起见，我们直接停止。
+                
+                print(f"!!! Long sequence repetition detected. Stopping generation. !!!")
+                print(f"Repetitive probe found: '{probe[:30]}...'")
+                return "long_repetition" # 返回一个非 None 值来停止
         # 2) Evaluate stop strings.
         stop_string = None
         if self.stop:

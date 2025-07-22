@@ -39,12 +39,13 @@ class StopChecker:
        new_char_count is the number of chars added to the
            sequence's output text for the newly generated token
         """
-
+        
         # Check if the minimum number of tokens has been generated yet;
         # skip the stop string/token checks if not
+        #raise ValueError("STOPCHECKER WAS DEFINITELY CALLED!")
         if seq.get_output_len() < sampling_params.min_tokens:
             return
-
+        
         # Check if the sequence has generated the EOS token.
         if ((not sampling_params.ignore_eos)
                 and seq.get_last_token_id() == seq.eos_token_id):
@@ -105,7 +106,7 @@ class StopChecker:
         Where stop_string is the matched stop string and offset is the
         length to which output_text should be truncated, or -1 for no
         truncation.
-        """
+        """ 
         if not new_char_count or not stop:
             return None
 
